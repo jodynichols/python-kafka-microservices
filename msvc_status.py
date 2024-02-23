@@ -55,7 +55,7 @@ SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set consumer object
 CONSUME_TOPICS = [
-    SYS_CONFIG["kafka-topics"]["pizza_status"],
+    SYS_CONFIG["kafka-topics"]["tea_status"],
 ]
 _, _, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
@@ -112,8 +112,8 @@ def thread_status_watchdog():
         time.sleep(SYS_CONFIG["state-store-orders"]["status_watchdog_minutes"] * 60)
 
 
-def get_pizza_status():
-    """Subscribe to pizza-status topic to update in-memory DB (order_ids dict)"""
+def get_tea_status():
+    """Subscribe to tea-status topic to update in-memory DB (order_ids dict)"""
     CONSUMER.subscribe(CONSUME_TOPICS)
     logging.info(f"Subscribed to topic(s): {', '.join(CONSUME_TOPICS)}")
     while True:
@@ -136,14 +136,14 @@ def get_pizza_status():
                             )
                             if order_data is not None:
                                 try:
-                                    pizza_status = json.loads(
+                                    tea_status = json.loads(
                                         event.value().decode()
                                     ).get(
                                         "STATUS",
                                         SYS_CONFIG["status-id"]["unknown"],
                                     )
                                 except Exception:
-                                    pizza_status = SYS_CONFIG["status-id"][
+                                    tea_status = SYS_CONFIG["status-id"][
                                         "something_wrong"
                                     ]
                                     log_exception(
@@ -152,19 +152,19 @@ def get_pizza_status():
                                     )
                                 finally:
                                     logging.info(
-                                        f"""Order '{order_id}' status updated: {get_string_status(SYS_CONFIG["status"], pizza_status)} ({pizza_status})"""
+                                        f"""Order '{order_id}' status updated: {get_string_status(SYS_CONFIG["status"], tea_status)} ({tea_status})"""
                                     )
                                     db.update_order_status(
                                         order_id,
-                                        pizza_status,
+                                        tea_status,
                                     )
                                     # Add to status to check statefulness (daemon on msvc_status)
                                     db.upsert_status(
                                         order_id,
-                                        pizza_status,
+                                        tea_status,
                                     )
                                     # Delete order from status table (state store for statefulness)
-                                    if int(pizza_status) in (
+                                    if int(tea_status) in (
                                         SYS_CONFIG["status-id"]["stuck"],
                                         SYS_CONFIG["status-id"]["cancelled"],
                                         SYS_CONFIG["status-id"]["delivered"],
@@ -197,4 +197,4 @@ if __name__ == "__main__":
     Thread(target=thread_status_watchdog, daemon=True).start()
 
     # Start consumer
-    get_pizza_status()
+    get_tea_status()

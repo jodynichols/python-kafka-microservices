@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Microservice to bake pizzas
+# Microservice to bake teas
 
 import sys
 import json
@@ -51,20 +51,20 @@ kafka_config_file, sys_config_file = validate_cli_args(SCRIPT)
 SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set producer/consumer objects
-PRODUCE_TOPIC_BAKED = SYS_CONFIG["kafka-topics"]["pizza_baked"]
-PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["pizza_status"]
+PRODUCE_TOPIC_MIXED = SYS_CONFIG["kafka-topics"]["tea_mixed"]
+PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["tea_status"]
 CONSUME_TOPICS = [
-    SYS_CONFIG["kafka-topics"]["pizza_assembled"],
+    SYS_CONFIG["kafka-topics"]["tea_labelled"],
 ]
 _, PRODUCER, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
     producer_extra_config={
         "on_delivery": delivery_report,
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_baked"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_mixed"]}_{HOSTNAME}""",
     },
     consumer_extra_config={
-        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_baked"]}_{HOSTNAME}""",
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_baked"]}_{HOSTNAME}""",
+        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_mixed"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_mixed"]}_{HOSTNAME}""",
     },
 )
 
@@ -75,14 +75,14 @@ GRACEFUL_SHUTDOWN = GracefulShutdown(consumer=CONSUMER)
 #####################
 # General functions #
 #####################
-def pizza_baked(order_id: str):
+def tea_mixed(order_id: str):
     # Produce to kafka topic
     PRODUCER.produce(
-        PRODUCE_TOPIC_BAKED,
+        PRODUCE_TOPIC_MIXED,
         key=order_id,
         value=json.dumps(
             {
-                "status": SYS_CONFIG["status-id"]["pizza_baked"],
+                "status": SYS_CONFIG["status-id"]["tea_mixed"],
                 "timestamp": timestamp_now(),
             }
         ).encode(),
@@ -90,7 +90,7 @@ def pizza_baked(order_id: str):
     PRODUCER.flush()
 
 
-def receive_pizza_assembled():
+def receive_tea_labelled():
     CONSUMER.subscribe(CONSUME_TOPICS)
     logging.info(f"Subscribed to topic(s): {', '.join(CONSUME_TOPICS)}")
     while True:
@@ -117,15 +117,15 @@ def receive_pizza_assembled():
                                 sys.exc_info(),
                             )
                         else:
-                            # Assemble pizza (blocking point as it is not using asyncio, but that is for demo purposes)
+                            # Assemble tea (blocking point as it is not using asyncio, but that is for demo purposes)
                             logging.info(
                                 f"Preparing order '{order_id}', baking time is {baking_time} second(s)"
                             )
                             time.sleep(baking_time)
-                            logging.info(f"Order '{order_id}' is baked!")
+                            logging.info(f"Order '{order_id}' is mixed!")
 
                             # Update kafka topics
-                            pizza_baked(
+                            tea_mixed(
                                 order_id,
                             )
 
@@ -147,4 +147,4 @@ if __name__ == "__main__":
     save_pid(SCRIPT)
 
     # Start consumer
-    receive_pizza_assembled()
+    receive_tea_labelled()

@@ -65,7 +65,7 @@ kafka_config_file, sys_config_file = validate_cli_args(SCRIPT)
 SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set producer object
-PRODUCE_TOPIC_ORDERED = SYS_CONFIG["kafka-topics"]["pizza_ordered"]
+PRODUCE_TOPIC_ORDERED = SYS_CONFIG["kafka-topics"]["tea_ordered"]
 _, PRODUCER, _, _ = set_producer_consumer(
     kafka_config_file,
     producer_extra_config={
@@ -74,7 +74,6 @@ _, PRODUCER, _, _ = set_producer_consumer(
     },
     disable_consumer=True,
 )
-
 # Set signal handler
 GRACEFUL_SHUTDOWN = GracefulShutdown()
 
@@ -170,39 +169,39 @@ def logout():
 @app.route("/", methods=["GET"])
 @login_required
 def view_menu():
-    """View menu to order a pizza"""
+    """View menu to order a tea"""
     return render_template(
         "menu.html",
         title="Menu",
-        sauces=SYS_CONFIG["pizza"]["sauce"],
-        cheeses=SYS_CONFIG["pizza"]["cheese"],
-        main_toppings=SYS_CONFIG["pizza"]["main_topping"],
-        extra_toppings=SYS_CONFIG["pizza"]["extra_toppings"],
+        teas=SYS_CONFIG["tea"]["tea"],
+        sugars=SYS_CONFIG["tea"]["sugar"],
+        pearls=SYS_CONFIG["tea"]["pearl"],
+        toppings=SYS_CONFIG["tea"]["topping"],
     )
 
 
 @app.route("/", methods=["POST"])
 @login_required
-def order_pizza():
-    """Process pizza order request"""
+def order_tea():
+    """Process tea order request"""
     with GRACEFUL_SHUTDOWN as _:
         # Generate order unique ID
         order_id = uuid.uuid4().hex[-8:]
 
         # Get request form
         request_form = dict(request.form)
-        request_form.pop("extra_topping", None)
+        request_form.pop("toppings", None)
         request_form["customer_id"] = session["customer_id"]
         request_form["username"] = session["username"]
 
         # Get extra topping list
-        extra_toppings = request.form.getlist("extra_topping") or list()
+        #toppings = request.form.getlist("toppings") or list()
 
         order_details = {
             "status": SYS_CONFIG["status-id"]["order_placed"],
             "timestamp": timestamp_now(),
             "order": {
-                "extra_toppings": extra_toppings,
+                #"toppings": toppings,
                 **request_form,
             },
         }
@@ -314,10 +313,10 @@ def get_order(order_id: str):
                     status_str=order_details["status_str"],
                     status_delivered=SYS_CONFIG["status-id"]["delivered"],
                     username=order_details["username"],
-                    order=f"""Sauce: {order_details["sauce"]}<br>
-                            Cheese: {order_details["cheese"]}<br>
-                            Main: {order_details["topping"]}<br>
-                            Extras: {order_details["extras"]}""",
+                    order=f"""Tea: {order_details["tea"]}<br>
+                            Sugar: {order_details["sugar"]}<br>
+                            Pearl: {order_details["pearl"]}<br>
+                            Topping: {order_details["topping"]}""",
                 )
             else:
                 # Order does not exists
@@ -383,7 +382,7 @@ def view_logs_ajax(order_id: str):
 def main(*args):
     # If started using gunicorn
     return app
-
+    
 
 if __name__ == "__main__":
     # Save PID

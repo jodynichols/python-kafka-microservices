@@ -2,49 +2,49 @@
 
 {% block content %}
 {% include 'navbar.html' %}
-<h4><span class="badge badge-dark w-100">Customise your pizza</span></h4>
+<h4><span class="badge badge-dark w-100">Customise your bubble tea</span></h4>
 <form action="/" class="needs-validation" method="POST">
     <div class="row">
         <div class="col-3">
-            <label for="sauce">Sauce:</label>
-            {% for sauce in sauces %}
+            <label for="tea">Tea:</label>
+            {% for tea in teas %}
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="sauce" value="{{sauce}}" required>
+                <input class="form-check-input" type="radio" name="tea" value="{{tea}}" required>
                 <label class="form-check-label">
-                    {{sauce}}
+                    {{tea}}
                 </label>
             </div>
             {% endfor %}
         </div>
         <div class="col-3">
-            <label for="cheese">Cheese:</label>
-            {% for cheese in cheeses %}
+            <label for="sugar">Sugar Level:</label>
+            {% for sugar in sugars %}
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="cheese" value="{{cheese}}" required>
+                <input class="form-check-input" type="radio" name="sugar" value="{{sugar}}" required>
                 <label class="form-check-label">
-                    {{cheese}}
+                    {{sugar}}
                 </label>
             </div>
             {% endfor %}
         </div>
         <div class="col-3">
-            <label for="main_topping">Main topping:</label>
-            {% for main_topping in main_toppings %}
+            <label for="pearl">Pearl:</label>
+            {% for pearl in pearls %}
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="main_topping" value="{{main_topping}}" required>
+                <input class="form-check-input" type="radio" name="pearl" value="{{pearl}}" required>
                 <label class="form-check-label">
-                    {{main_topping}}
+                    {{pearl}}
                 </label>
             </div>
             {% endfor %}
         </div>
         <div class="col-3">
-            <label for="extra_topping">Extra toppings:</label>
-            {% for extra_topping in extra_toppings %}
+            <label for="topping">Topping:</label>
+            {% for topping in toppings %}
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="extra_topping" value="{{extra_topping}}">
+                <input class="form-check-input" type="radio" name="topping" value="{{topping}}">
                 <label class="form-check-label">
-                    {{extra_topping}}
+                    {{topping}}
                 </label>
             </div>
             {% endfor %}

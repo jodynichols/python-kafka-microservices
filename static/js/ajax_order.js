@@ -79,14 +79,14 @@ function get_logs() {
                         if (data.webapp) {
                             $("#webapp_data").html(data.webapp);
                         }
-                        if (data.msvc_assemble) {
-                            $("#msvc_assemble_data").html(data.msvc_assemble);
+                        if (data.msvc_label) {
+                            $("#msvc_label_data").html(data.msvc_label);
                         }
-                        if (data.msvc_bake) {
-                            $("#msvc_bake_data").html(data.msvc_bake);
+                        if (data.msvc_mix) {
+                            $("#msvc_mix_data").html(data.msvc_mix);
                         }
-                        if (data.msvc_delivery) {
-                            $("#msvc_delivery_data").html(data.msvc_delivery);
+                        if (data.msvc_topping) {
+                            $("#msvc_top_data").html(data.msvc_top);
                         }
                         if (data.msvc_status) {
                             $("#msvc_status_data").html(data.msvc_status);
@@ -98,7 +98,7 @@ function get_logs() {
                 }
             });
         }
-        if (last_result == status_delivered) {
+        if (last_result == status_topped) {
             one_last_call += 1;
         }
     }

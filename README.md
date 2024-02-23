@@ -1,5 +1,5 @@
 # <img src="static/images/logo.png" width="32" /> python-kafka-microservices <img src="static/images/logo.png" width="32" />
-This is an example of a microservice ecosystem using the CQRS (Command and Query Responsibility Segregation) and Event Sourcing patterns, and nothing better to explain that by using as reference a pizza takeaway shop. Who doesn't love a pizza? :blush:
+This is an example of a microservice ecosystem using the CQRS (Command and Query Responsibility Segregation) and Event Sourcing patterns, and nothing better to explain that by using as reference a bubble tea  shop. Who doesn't love a bubble tea? :blush:
 
 ## CQRS in a nutshell
 CQRS is an architectural pattern that separates the responsibility of executing commands that change data (write operations) from the responsibility of retrieving data (read operations).
@@ -28,15 +28,15 @@ By using an event sourcing architecture with Apache Kafka, you can benefit from 
 ## CQRS vs Event Sourcing
 While event sourcing can be used to implement CQRS, it does not necessarily imply event sourcing. In other words, CQRS is focused on the separation of write and read operations, while event sourcing is focused on storing the history of changes to a system as a sequence of events. CQRS and event sourcing can complement each other, but they are not the same thing.
 
-## Pizza Takeaway Shop
+## Bubble Tea Shop
 
 ### High level view
-This pizza takeaway shop ecosystem was designed using Python and made simple for demo/learning purposes, basically the following are the app/microservices created:
-- Web application using the Flask lib (```webapp.py```) so users can login to, customise their pizza, order and follow up the status of their order. This webapp will be the Command portion of the CQRS pattern. To make it simpler a SQLite3 state store* is being used as the materialised view between Command and Query, however in a real life scenario that could be an in-memory data store or ksqlDB/Flink
-- Once the pizza is ordered it will go through four microservices (following the same flow of a real pizza shop):
-  - Assemble the pizza as per order (```msvc_assemble.py```)
-  - Bake the pizza (```msvc_bake.py```)
-  - Have it delivered (```msvc_delivery.py```)
+This bubble tea shop ecosystem was designed using Python and made simple for demo/learning purposes, basically the following are the app/microservices created:
+- Web application using the Flask lib (```webapp.py```) so users can login to, customise their  bubble tea, order and follow up the status of their order. This webapp will be the Command portion of the CQRS pattern. To make it simpler a SQLite3 state store* is being used as the materialised view between Command and Query, however in a real life scenario that could be an in-memory data store or ksqlDB/Flink
+- Once the tea is ordered it will go through four microservices (following the same flow of a real bubble shop):
+  - Print a label (```msvc_label.py```)
+  - Mix the bubble tea as per order (```msvc_mix.py```)
+  - Put a top on the tea (```msvc_top.py```)
   - Process status (```msvc_status.py```): Whenever one of the previous microservices complete their task they will communicate with this microservice so it can update the web application. This microservice will be the Query portion of the CQRS pattern. It will have the materialised views stored in the aforementioned SQLite3 state store*
 - All interprocess communication is via an Apache Kafka cluster
 
@@ -69,71 +69,71 @@ Streams and tables are the two primary abstractions, they are referred to as col
 
 **Source Collections**: The topics produced/consumed by the microservices need to be ingested by ksqlDB so they can be stream processed:
 ```
-CREATE STREAM IF NOT EXISTS PIZZA_ORDERED (
+CREATE STREAM IF NOT EXISTS {STREAM_ORDERED} (
     order_id VARCHAR KEY,
     status INT,
     timestamp BIGINT,
     order STRUCT<
-        extra_toppings ARRAY<STRING>,
+        sugar STRING,
         username STRING,
         customer_id STRING,
-        sauce STRING,
-        cheese STRING,
-        main_topping STRING
+        tea STRING,
+        pearl STRING,
+        topping STRING
     >
 ) WITH (
-    KAFKA_TOPIC = 'pizza-ordered',
+    KAFKA_TOPIC = '{TOPIC_ORDERED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
 
-CREATE STREAM IF NOT EXISTS PIZZA_ASSEMBLED (
+CREATE STREAM IF NOT EXISTS {STREAM_LABELLED} (
     order_id VARCHAR KEY,
     status INT,
     baking_time INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = 'pizza-assembled',
+    KAFKA_TOPIC = '{TOPIC_LABELLED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
 
-CREATE STREAM IF NOT EXISTS PIZZA_BAKED (
+CREATE STREAM IF NOT EXISTS {STREAM_MIXED} (
     order_id VARCHAR KEY,
     status INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = 'pizza-baked',
+    KAFKA_TOPIC = '{TOPIC_MIXED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
 
-STREAM_DELIVERED: f"""CREATE STREAM IF NOT EXISTS PIZZA_DELIVERED (
+CREATE STREAM IF NOT EXISTS {STREAM_TOPPED} (
     order_id VARCHAR KEY,
     status INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = 'pizza-delivered',
+    KAFKA_TOPIC = '{TOPIC_LABELLED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
 
-CREATE STREAM IF NOT EXISTS PIZZA_PENDING (
+CREATE STREAM IF NOT EXISTS {STREAM_PENDING} (
     order_id VARCHAR KEY,
     status INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = 'pizza-pending',
+    KAFKA_TOPIC = '{TOPIC_PENDING}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
 
-CREATE STREAM IF NOT EXISTS PIZZA_STATUS (
+CREATE STREAM IF NOT EXISTS {STREAM_STATUS} (
     order_id VARCHAR KEY,
     status INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC='pizza-status',
+    KAFKA_TOPIC='{TOPIC_STATUS}',
     VALUE_FORMAT='JSON',
     TIMESTAMP='timestamp'
 );
@@ -141,18 +141,12 @@ CREATE STREAM IF NOT EXISTS PIZZA_STATUS (
 
 **Derived Collections**: With the source collections created (streams) we can now extract the status field of each event and have them merged into a single topic/stream by creating persistent queries:
 ```
-INSERT INTO PIZZA_STATUS SELECT order_id, status, timestamp FROM PIZZA_ORDERED EMIT CHANGES;
-INSERT INTO PIZZA_STATUS SELECT order_id, status, timestamp FROM PIZZA_ASSEMBLED EMIT CHANGES;
-INSERT INTO PIZZA_STATUS SELECT order_id, status, timestamp FROM PIZZA_BAKED EMIT CHANGES;
-INSERT INTO PIZZA_STATUS SELECT order_id, status, timestamp FROM PIZZA_DELIVERED EMIT CHANGES;
-INSERT INTO PIZZA_STATUS SELECT order_id, status, timestamp FROM PIZZA_PENDING EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_ORDERED EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_LABELLED EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_MIXED EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_TOPPED EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEAQ_PENDING EMIT CHANGES;
 ```
-
-### Start now!
-You can setup your own environment to do the tests, or go straight to the <a href="http://confluent-pizza-demo-1570877491.eu-west-1.elb.amazonaws.com" title="Start demo" target="_blank"><b>public demo by clicking here</b></a>.
- - Enter your username
- - No need for password
- - You will only be able to see your own orders, you cannot see someone else's
 
 ### Installation and Configuration
 - SQLite3 and Python +3.8 required
@@ -177,12 +171,12 @@ You can setup your own environment to do the tests, or go straight to the <a hre
 (*) Topics can be changed via system configuration file (default is ```'config_sys/default.ini'```):
 ```
 [kafka-topics]
-pizza_pending = pizza-pending
-pizza_ordered = pizza-ordered
-pizza_assembled = pizza-assembled
-pizza_baked = pizza-baked
-pizza_delivered = pizza-delivered
-pizza_status = pizza-status
+tea_pending = tea-pending
+tea_ordered = tea-ordered
+tea_labelled = tea-labellled
+tea_mixed = tea-mixed
+tea_toppped = tea-topped
+tea_status = tea-status
 ```
 
 ### Running the webapp and microservices
@@ -215,18 +209,13 @@ Should you want to try it out on your own and run it all locally, you will need 
 1. After starting all scripts and accessing the landing page (http://127.0.0.1:8000), customise your pizza and submit your order:
 ![image](static/images/docs/webapp_menu.png)
 
-2. Once the order is submitted the webapp will produce an event to the Kafka topic ```pizza-ordered```:
+2. Once the order is submitted the webapp will produce an event to the Kafka topic ```tea-ordered```:
 ```
-(webapp) INFO 21:00:39.603 - Event successfully produced
- - Topic 'pizza-ordered', Partition #5, Offset #18
- - Key: b32ad
- - Value: {"status": 100, "timestamp": 1676235639159, "order": {"extra_toppings": ["Mushroom", "Black olives", "Green pepper"], "customer_id": "d94a6c43d9f487c1bef659f05c002213", "name": "Italo", "sauce": "Tomato", "cheese": "Mozzarella", "main_topping": "Pepperoni"}}
- ```
-
+<<ADD EXAMPLE>>
 3. The webapp will display the confirmation of the order:
 ![image](static/images/docs/webapp_order_confirmation.png)
 
-4. The microservice **Deliver Pizza** (step 1/2) receives early warning about a new order by subscribing to topic ```pizza-ordered```. In a real life scenario it would get the ```customer_id``` data and query its data store (e.g., ksqlDB/Flink) and fetch the delivery address:
+4. The microservice **Label Tea** (step 1/2) receives early warning about a new order by subscribing to topic ```tea-topped```. In a real life scenario it would get the ```customer_id``` data and query its data store (e.g., ksqlDB/Flink) and fetch the delivery address:
 ```
 (msvc_delivery) INFO 21:00:18.516 - Subscribed to topic(s): pizza-ordered, pizza-baked
 (msvc_delivery) INFO 21:00:39.609 - Early warning to deliver order 'b32ad' to customer_id 'd94a6c43d9f487c1bef659f05c002213'
@@ -334,7 +323,7 @@ One very important element of any Kafka consumer is by handling OS signals to be
 ![image](static/images/docs/demo.gif)
 
 Enjoy!
-
+This project is a bubble tea-ified version of https://github.com/ifnesi/python-kafka-microservices
 This project was inspired by: https://www.confluent.io/en-gb/blog/event-driven-microservices-with-python-and-kafka/
 
 Check out Confluent's Developer portal (https://developer.confluent.io/), it has free courses, documents, articles, blogs, podcasts and so many more content to get you up and running with a fully managed Apache Kafka service

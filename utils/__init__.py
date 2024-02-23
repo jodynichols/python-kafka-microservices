@@ -82,8 +82,8 @@ def get_system_config(
         sys_config = dict()
         for s in config_parser.sections():
             sys_config[s] = dict(config_parser[s])
-        for s in ("sauce", "cheese", "main_topping", "extra_toppings"):
-            sys_config["pizza"][s] = parse_list(sys_config["pizza"][s])
+        for s in ("tea", "sugar", "pearl", "topping"):
+            sys_config["tea"][s] = parse_list(sys_config["tea"][s])
 
         # Parse order status
         sys_config["status"] = {

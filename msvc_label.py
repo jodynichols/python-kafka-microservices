@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Microservice to assemble pizzas
+# Microservice to label teas
 
 import sys
 import json
@@ -53,20 +53,20 @@ kafka_config_file, sys_config_file = validate_cli_args(SCRIPT)
 SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set producer/consumer objects
-PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["pizza_status"]
-PRODUCE_TOPIC_ASSEMBLED = SYS_CONFIG["kafka-topics"]["pizza_assembled"]
+PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["tea_status"]
+PRODUCE_TOPIC_LABELLED = SYS_CONFIG["kafka-topics"]["tea_labelled"]
 CONSUME_TOPICS = [
-    SYS_CONFIG["kafka-topics"]["pizza_ordered"],
+    SYS_CONFIG["kafka-topics"]["tea_ordered"],
 ]
 _, PRODUCER, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
     producer_extra_config={
         "on_delivery": delivery_report,
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_assembled"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labelled"]}_{HOSTNAME}""",
     },
     consumer_extra_config={
-        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_assembled"]}_{HOSTNAME}""",
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_assembled"]}_{HOSTNAME}""",
+        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_labelled"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labelled"]}_{HOSTNAME}""",
     },
 )
 
@@ -77,17 +77,17 @@ GRACEFUL_SHUTDOWN = GracefulShutdown(consumer=CONSUMER)
 #####################
 # General functions #
 #####################
-def pizza_assembled(
+def tea_labelled(
     order_id: str,
     baking_time: int,
 ):
     # Produce to kafka topic
     PRODUCER.produce(
-        PRODUCE_TOPIC_ASSEMBLED,
+        PRODUCE_TOPIC_LABELLED,
         key=order_id,
         value=json.dumps(
             {
-                "status": SYS_CONFIG["status-id"]["pizza_assembled"],
+                "status": SYS_CONFIG["status-id"]["tea_labelled"],
                 "baking_time": baking_time,
                 "timestamp": timestamp_now(),
             }
@@ -130,17 +130,17 @@ def receive_orders():
                                 16,
                             )
 
-                            # Assemble pizza
+                            # Assemble tea
                             assembling_time = seed % 8 + 4
                             logging.info(
                                 f"Preparing order '{order_id}', assembling time is {assembling_time} second(s)"
                             )
                             time.sleep(assembling_time)
-                            logging.info(f"Order '{order_id}' is assembled!")
+                            logging.info(f"Order '{order_id}' is labelled!")
 
                             # Update kafka topics
                             baking_time = seed % 8 + 8
-                            pizza_assembled(
+                            tea_labelled(
                                 order_id,
                                 baking_time,
                             )
