@@ -54,7 +54,7 @@ SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set producer/consumer objects
 PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["tea_status"]
-PRODUCE_TOPIC_LABELLED = SYS_CONFIG["kafka-topics"]["tea_labelled"]
+PRODUCE_TOPIC_LABELED = SYS_CONFIG["kafka-topics"]["tea_labeled"]
 CONSUME_TOPICS = [
     SYS_CONFIG["kafka-topics"]["tea_ordered"],
 ]
@@ -62,11 +62,11 @@ _, PRODUCER, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
     producer_extra_config={
         "on_delivery": delivery_report,
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labelled"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labeled"]}_{HOSTNAME}""",
     },
     consumer_extra_config={
-        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_labelled"]}_{HOSTNAME}""",
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labelled"]}_{HOSTNAME}""",
+        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_labeled"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_labeled"]}_{HOSTNAME}""",
     },
 )
 
@@ -77,17 +77,17 @@ GRACEFUL_SHUTDOWN = GracefulShutdown(consumer=CONSUMER)
 #####################
 # General functions #
 #####################
-def tea_labelled(
+def tea_labeled(
     order_id: str,
     baking_time: int,
 ):
     # Produce to kafka topic
     PRODUCER.produce(
-        PRODUCE_TOPIC_LABELLED,
+        PRODUCE_TOPIC_LABELED,
         key=order_id,
         value=json.dumps(
             {
-                "status": SYS_CONFIG["status-id"]["tea_labelled"],
+                "status": SYS_CONFIG["status-id"]["tea_labeled"],
                 "baking_time": baking_time,
                 "timestamp": timestamp_now(),
             }
@@ -136,11 +136,11 @@ def receive_orders():
                                 f"Preparing order '{order_id}', assembling time is {assembling_time} second(s)"
                             )
                             time.sleep(assembling_time)
-                            logging.info(f"Order '{order_id}' is labelled!")
+                            logging.info(f"Order '{order_id}' is labeled!")
 
                             # Update kafka topics
                             baking_time = seed % 8 + 8
-                            tea_labelled(
+                            tea_labeled(
                                 order_id,
                                 baking_time,
                             )

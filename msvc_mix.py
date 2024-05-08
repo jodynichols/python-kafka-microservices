@@ -54,7 +54,7 @@ SYS_CONFIG = get_system_config(sys_config_file)
 PRODUCE_TOPIC_MIXED = SYS_CONFIG["kafka-topics"]["tea_mixed"]
 PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["tea_status"]
 CONSUME_TOPICS = [
-    SYS_CONFIG["kafka-topics"]["tea_labelled"],
+    SYS_CONFIG["kafka-topics"]["tea_labeled"],
 ]
 _, PRODUCER, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
@@ -90,7 +90,7 @@ def tea_mixed(order_id: str):
     PRODUCER.flush()
 
 
-def receive_tea_labelled():
+def receive_tea_labeled():
     CONSUMER.subscribe(CONSUME_TOPICS)
     logging.info(f"Subscribed to topic(s): {', '.join(CONSUME_TOPICS)}")
     while True:
@@ -108,8 +108,8 @@ def receive_tea_labelled():
 
                         order_id = event.key().decode()
                         try:
-                            baking_time = json.loads(event.value().decode()).get(
-                                "baking_time", 0
+                            mixing_time = json.loads(event.value().decode()).get(
+                                "mixing_time", 0
                             )
                         except Exception:
                             log_exception(
@@ -119,9 +119,9 @@ def receive_tea_labelled():
                         else:
                             # Assemble tea (blocking point as it is not using asyncio, but that is for demo purposes)
                             logging.info(
-                                f"Preparing order '{order_id}', baking time is {baking_time} second(s)"
+                                f"Preparing order '{order_id}', mixing time is {mixing_time} second(s)"
                             )
-                            time.sleep(baking_time)
+                            time.sleep(mixing_time)
                             logging.info(f"Order '{order_id}' is mixed!")
 
                             # Update kafka topics
@@ -147,4 +147,4 @@ if __name__ == "__main__":
     save_pid(SCRIPT)
 
     # Start consumer
-    receive_tea_labelled()
+    receive_tea_labeled()

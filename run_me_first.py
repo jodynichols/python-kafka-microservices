@@ -59,8 +59,8 @@ STREAM_ORDERED = TOPIC_ORDERED.replace("-", "_").upper()
 TOPIC_PENDING = SYS_CONFIG["kafka-topics"]["tea_pending"]
 STREAM_PENDING = TOPIC_PENDING.replace("-", "_").upper()
 
-TOPIC_LABELLED = SYS_CONFIG["kafka-topics"]["tea_labelled"]
-STREAM_LABELLED = TOPIC_LABELLED.replace("-", "_").upper()
+TOPIC_LABELED = SYS_CONFIG["kafka-topics"]["tea_labeled"]
+STREAM_LABELED = TOPIC_LABELED.replace("-", "_").upper()
 
 TOPIC_MIXED = SYS_CONFIG["kafka-topics"]["tea_mixed"]
 STREAM_MIXED = TOPIC_MIXED.replace("-", "_").upper()
@@ -80,7 +80,7 @@ PERSISTENT_QUERIES = {
     for stream in [
         STREAM_ORDERED,
         STREAM_PENDING,
-        STREAM_LABELLED,
+        STREAM_LABELED,
         STREAM_MIXED,
         STREAM_TOPPED,
     ]
@@ -104,13 +104,13 @@ KSQL_STATEMENTS = {
         VALUE_FORMAT = 'JSON',
         TIMESTAMP = 'timestamp'
     );""",
-    STREAM_LABELLED: f"""CREATE STREAM IF NOT EXISTS {STREAM_LABELLED} (
+    STREAM_LABELED: f"""CREATE STREAM IF NOT EXISTS {STREAM_LABELED} (
         order_id VARCHAR KEY,
         status INT,
         baking_time INT,
         timestamp BIGINT
     ) WITH (
-        KAFKA_TOPIC = '{TOPIC_LABELLED}',
+        KAFKA_TOPIC = '{TOPIC_LABELED}',
         VALUE_FORMAT = 'JSON',
         TIMESTAMP = 'timestamp'
     );""",
@@ -128,7 +128,7 @@ KSQL_STATEMENTS = {
         status INT,
         timestamp BIGINT
     ) WITH (
-        KAFKA_TOPIC = '{TOPIC_LABELLED}',
+        KAFKA_TOPIC = '{TOPIC_LABELED}',
         VALUE_FORMAT = 'JSON',
         TIMESTAMP = 'timestamp'
     );""",

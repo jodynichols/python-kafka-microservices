@@ -1,4 +1,5 @@
-# <img src="static/images/logo.png" width="32" /> python-kafka-microservices <img src="static/images/logo.png" width="32" />
+# <img src="static/images/logo.png" width="200" /> <br>python-kafka-microservices 
+
 This is an example of a microservice ecosystem using the CQRS (Command and Query Responsibility Segregation) and Event Sourcing patterns, and nothing better to explain that by using as reference a bubble tea  shop. Who doesn't love a bubble tea? :blush:
 
 ## CQRS in a nutshell
@@ -10,7 +11,7 @@ CQRS is often used in highly scalable, complex systems where there is a need for
 
 A lean approach to implement the CQRS patter is by using Apache Kafka as its underlying event store. The basic idea behind using Kafka for CQRS is to have separate Kafka topics for commands and queries, which allows for a clear separation of the write and read models. Here are the steps to implement CQRS with Apache Kafka:
 1. Create topics for commands and queries: You need to create two distinct topics in Kafka so that you can handle them separately
-2. Set up producers for commands: The commands can be in the form of events that describe the changes to be made to the data. In this project, the command topic will be a pizza order
+2. Set up producers for commands: The commands can be in the form of events that describe the changes to be made to the data. In this project, the command topic will be a bubble tea order
 3. Set up consumers for queries: On the other hand, you need to set up a consumer for the query topic. In this project, the query topic will be the status of the order
 4. Use a materialized view to store query results: To handle read operations efficiently, you can use a materialized view to store the results of queries. The materialized view can be updated by consuming the events from the command topic and applying them to the data stored in the view. In this project, it will be used a SQLite3 data store
 5. Keep the command and query topics in sync, to ensure that you need to use a mechanism such as event sourcing to keep track of all the changes made to the data. This allows you to maintain a consistent view of the data and ensure that the query results are up-to-date
@@ -87,13 +88,13 @@ CREATE STREAM IF NOT EXISTS {STREAM_ORDERED} (
     TIMESTAMP = 'timestamp'
 );
 
-CREATE STREAM IF NOT EXISTS {STREAM_LABELLED} (
+CREATE STREAM IF NOT EXISTS {STREAM_LABELED} (
     order_id VARCHAR KEY,
     status INT,
     baking_time INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = '{TOPIC_LABELLED}',
+    KAFKA_TOPIC = '{TOPIC_LABELED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
@@ -113,7 +114,7 @@ CREATE STREAM IF NOT EXISTS {STREAM_TOPPED} (
     status INT,
     timestamp BIGINT
 ) WITH (
-    KAFKA_TOPIC = '{TOPIC_LABELLED}',
+    KAFKA_TOPIC = '{TOPIC_LABELED}',
     VALUE_FORMAT = 'JSON',
     TIMESTAMP = 'timestamp'
 );
@@ -142,7 +143,7 @@ CREATE STREAM IF NOT EXISTS {STREAM_STATUS} (
 **Derived Collections**: With the source collections created (streams) we can now extract the status field of each event and have them merged into a single topic/stream by creating persistent queries:
 ```
 INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_ORDERED EMIT CHANGES;
-INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_LABELLED EMIT CHANGES;
+INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_LABELED EMIT CHANGES;
 INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_MIXED EMIT CHANGES;
 INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEA_TOPPED EMIT CHANGES;
 INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEAQ_PENDING EMIT CHANGES;
@@ -173,7 +174,7 @@ INSERT INTO TEA_STATUS SELECT order_id, status, timestamp FROM TEAQ_PENDING EMIT
 [kafka-topics]
 tea_pending = tea-pending
 tea_ordered = tea-ordered
-tea_labelled = tea-labellled
+tea_labeled = tea-labeled
 tea_mixed = tea-mixed
 tea_toppped = tea-topped
 tea_status = tea-status
@@ -206,7 +207,7 @@ Should you want to try it out on your own and run it all locally, you will need 
 - Once done with it, stop your docker containers: ```docker-compose down```
 
 ### Using the webapp and of chronology of events
-1. After starting all scripts and accessing the landing page (http://127.0.0.1:8000), customise your pizza and submit your order:
+1. After starting all scripts and accessing the landing page (http://127.0.0.1:8000), customise your bubble tea and submit your order:
 ![image](static/images/docs/webapp_menu.png)
 
 2. Once the order is submitted the webapp will produce an event to the Kafka topic ```tea-ordered```:
@@ -217,7 +218,7 @@ Should you want to try it out on your own and run it all locally, you will need 
 
 4. The microservice **Label Tea** (step 1/2) receives early warning about a new order by subscribing to topic ```tea-topped```. In a real life scenario it would get the ```customer_id``` data and query its data store (e.g., ksqlDB/Flink) and fetch the delivery address:
 ```
-(msvc_delivery) INFO 21:00:18.516 - Subscribed to topic(s): pizza-ordered, pizza-baked
+(msvc_delivery) INFO 21:00:18.516 - Subscribed to topic(s): tea-ordered, tea-labeled
 (msvc_delivery) INFO 21:00:39.609 - Early warning to deliver order 'b32ad' to customer_id 'd94a6c43d9f487c1bef659f05c002213'
 ```
 
@@ -291,7 +292,7 @@ Have you noticed the microservice **Deliver Pizza** is stateful as it has two st
 As that microservice is subscribed to two different topics, Apache Kafka cannot guarantee the order of events for the same event key. Hang on, but won't the early notification always arrive before the notification the pizza is baked (see the architecture diagram above)? The answer to that is: usually yes, as the first step happens before the second one, however what if for some reason the microservice **Deliver Pizza** is down and a bunch of events get pushed through the topics? When the microservice is brought up it will consume the events from the two topics and not necessarily in the same chronological order (for the same event key). For that reason microservice like that needs to take into account this kind of situations. On this project, if that happens the customer would first get the status "Bear with us we are checking your order, it won’t take long" (once the pizza is baked notification is processed), then would get the status "Your pizza was delivered" (once the early warning notification is processed).
 
 #### **IMPORTANT 2**
-The microservice **Process Status** is also stateful as it receives several notifications for the same event key. If that service was to be handled as stateless it would be a problem if a given order is not fully processed, for example, what if the baker decided to call it a day? The status of the order would get stuck forever as "Your pizza is in the oven". For example, it could be estimated the orders shouldn't take more than 'X minutes' between being ordered and baked and 'Y minutes' between being baked and not completed yet, creating then a SLA in between microservices, if that gets violated it could trigger a notification to state something got stuck (at least the pizza shop manager would get notified before the customer call to complain about the delay).<br><br>
+The microservice **Process Status** is also stateful as it receives several notifications for the same event key. If that service was to be handled as stateless it would be a problem if a given order is not fully processed, for example, what if the baker decided to call it a day? The status of the order would get stuck forever as "Your pizza is in the oven". For example, it could be estimated the orders shouldn't take more than 'X minutes' between being ordered and baked and 'Y minutes' between being baked and not completed yet, creating then a SLA in between microservices, if that gets violated it could trigger a notification to state something got stuck (at least the bubble tea shop manager would get notified before the customer complains about the delay).<br><br>
 What that microservice does is to spaw a new thread with an infinite loop to check the status of all orders in progress for every few seconds, like a watchdog.
 
 ### Graceful shutdown
