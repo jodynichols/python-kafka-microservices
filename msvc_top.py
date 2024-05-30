@@ -157,13 +157,13 @@ def receive_tea_mixed():
                         topic = event.topic()
 
                         if topic == TOPIC_TEA_ORDERED:
-                            # Early warning that a tea must be topped once ready (usually it should arrive before the tea is mixd)
+                            # Early warning that a tea must be topped once ready (usually it should arrive before the tea is mixed)
                             try:
                                 order_details = json.loads(event.value().decode())
                                 order = order_details.get("order", dict())
                                 customer_id = order.get("customer_id", "0000")
 
-                                # Check if it is a pending order, that happens when the early notification (for some reason) arrives after the notification the tea is mixd
+                                # Check if it is a pending order, that happens when the early notification (for some reason) arrives after the notification the tea is mixed
                                 is_pending = False
                                 with DB(
                                     CUSTOMER_DB,
@@ -184,7 +184,7 @@ def receive_tea_mixed():
                                         top_tea(
                                             order_id,
                                             customer_id,
-                                            factor=2,  # penalised for not receiving the early warning before the notification the tea is mixd
+                                            factor=2,  # penalised for not receiving the early warning before the notification the tea is mixed
                                         )
 
                                 else:
@@ -229,7 +229,7 @@ def receive_tea_mixed():
                                 # Update kafka topics (error with order)
                                 tea_pending(order_id)
 
-                                # Add order_id to the DB as "pending", that happens when the early notification (for some reason) arrives after the notification the tea is mixd
+                                # Add order_id to the DB as "pending", that happens when the early notification (for some reason) arrives after the notification the tea is mixed
                                 with DB(
                                     CUSTOMER_DB,
                                     sys_config=SYS_CONFIG,

@@ -185,9 +185,9 @@ tea_status = tea-status
 - Start the demo (all in a single terminal): ```./start_demo.sh {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
 - Alternativelly, so you can see the logs of each process, open five shell terminals and start each service on them:
   - Terminal #1: ```python3 msvc_status.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
-  - Terminal #2: ```python3 msvc_assemble.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
+  - Terminal #2: ```python3 msvc_label.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
   - Terminal #3: ```python3 msvc_mix.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
-  - Terminal #4: ```python3 msvc_delivery.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
+  - Terminal #4: ```python3 msvc_top.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
   - Terminal #5: ```python3 webapp.py {KAFKA_CONFIG_FILE} {SYS_CONFIG_FILE}```
 - In a real life scenario each microservice (consumer in a consumer group) could be instantiated for as many times as there are partitions to the topic, however that is just for demo/learning purposes, only one instance will be spawn
 - Also, for the simplicity of the demo, no Schema Registry is being used. That is not an ideal scenario as the "contract" between Producers and Consumers are "implicitly hard coded" other than being declared through the schema registry
@@ -218,20 +218,20 @@ Should you want to try it out on your own and run it all locally, you will need 
 
 4. The microservice **Label Tea** (step 1/2) receives early warning about a new order by subscribing to topic ```tea-topped```. In a real life scenario it would get the ```customer_id``` data and query its data store (e.g., ksqlDB/Flink) and fetch the topping address:
 ```
-(msvc_delivery) INFO 21:00:18.516 - Subscribed to topic(s): tea-ordered, tea-labeled
-(msvc_delivery) INFO 21:00:39.609 - Early warning to top order 'b32ad' to customer_id 'd94a6c43d9f487c1bef659f05c002213'
+(msvc_top) INFO 21:00:18.516 - Subscribed to topic(s): tea-ordered, tea-labeled
+(msvc_top) INFO 21:00:39.609 - Early warning to top order 'b32ad' to customer_id 'd94a6c43d9f487c1bef659f05c002213'
 ```
 
 5. The microservice **Assemble Pizza**, which is subscribed to the topic ```bubble tea-ordered```, receives the order and starts labeling the bubble tea. It will also estimate the mixing time based on the ingredients chosen. Once the bubble tea is assembled, it will produce an event to the topic ```bubble tea-assembled``` as well as another to the topic ```bubble tea-status```:
 ```
-(msvc_assemble) INFO 21:00:08.500 - Subscribed to topic(s): bubble tea-ordered
-(msvc_assemble) INFO 21:00:39.604 - Preparing order 'b32ad', labeling time is 4 second(s)
-(msvc_assemble) INFO 21:00:43.608 - Order 'b32ad' is assembled!
-(msvc_assemble) INFO 21:00:43.923 - Event successfully produced
+(msvc_label) INFO 21:00:08.500 - Subscribed to topic(s): bubble tea-ordered
+(msvc_label) INFO 21:00:39.604 - Preparing order 'b32ad', labeling time is 4 second(s)
+(msvc_label) INFO 21:00:43.608 - Order 'b32ad' is assembled!
+(msvc_label) INFO 21:00:43.923 - Event successfully produced
  - Topic 'bubble tea-assembled', Partition #5, Offset #15
  - Key: b32ad
  - Value: {"mixing_time": 17}
-(msvc_assemble) INFO 21:00:44.847 - Event successfully produced
+(msvc_label) INFO 21:00:44.847 - Event successfully produced
  - Topic 'bubble tea-status', Partition #5, Offset #45
  - Key: b32ad
  - Value: {"status": 200}
@@ -243,13 +243,13 @@ Should you want to try it out on your own and run it all locally, you will need 
 (msvc_status) INFO 21:00:44.851 - Order 'b32ad' status updated: Your bubble tea is in the oven (200)
  ```
 
-7. The microservice **mix Pizza**, which is subscribed to the topic ```bubble tea-assembled```, receives the notification the bubble tea is assembled along with the mixing time, then it mixs the bubble tea accordingly. Once the bubble tea is mixd, it will produce an event to the topic ```bubble tea-mixd``` as well as another to the topic ```bubble tea-status```:
+7. The microservice **mix Pizza**, which is subscribed to the topic ```bubble tea-assembled```, receives the notification the bubble tea is assembled along with the mixing time, then it mixs the bubble tea accordingly. Once the bubble tea is mixed, it will produce an event to the topic ```bubble tea-mixed``` as well as another to the topic ```bubble tea-status```:
 ```
 (msvc_mix) INFO 21:00:15.319 - Subscribed to topic(s): bubble tea-assembled
 (msvc_mix) INFO 21:00:43.927 - Preparing order 'b32ad', mixing time is 17 second(s)
-(msvc_mix) INFO 21:01:00.929 - Order 'b32ad' is mixd!
+(msvc_mix) INFO 21:01:00.929 - Order 'b32ad' is mixed!
 (msvc_mix) INFO 21:01:01.661 - Event successfully produced
- - Topic 'bubble tea-mixd', Partition #5, Offset #15
+ - Topic 'bubble tea-mixed', Partition #5, Offset #15
  - Key: b32ad
  - Value:
 (msvc_mix) INFO 21:01:02.645 - Event successfully produced
@@ -264,12 +264,12 @@ Should you want to try it out on your own and run it all locally, you will need 
 (msvc_status) INFO 21:01:02.647 - Order 'b32ad' status updated: Your bubble tea is out for topping (300)
  ```
 
-9. The microservice **Top Pizza** (step 2/2), which is subscribed to the topic ```bubble tea-mixd```, receives the notification the bubble tea is mixd, then it delivers the bubble tea. It already had time to plan the topping as it got an early warning as soon as the order was placed. Once the bubble tea is topped, it will produce an event to the topic ```bubble tea-status```:
+9. The microservice **Top Pizza** (step 2/2), which is subscribed to the topic ```bubble tea-mixed```, receives the notification the bubble tea is mixed, then it delivers the bubble tea. It already had time to plan the topping as it got an early warning as soon as the order was placed. Once the bubble tea is topped, it will produce an event to the topic ```bubble tea-status```:
 ```
-(msvc_delivery) INFO 21:00:18.516 - Subscribed to topic(s): bubble tea-ordered, bubble tea-mixd
-(msvc_delivery) INFO 21:01:01.662 - Deliverying order 'b32ad' for customer_id 'd94a6c43d9f487c1bef659f05c002213', topping time is 10 second(s)
-(msvc_delivery) INFO 21:01:11.665 - Order 'b32ad' topped for customer_id 'd94a6c43d9f487c1bef659f05c002213'
-(msvc_delivery) INFO 21:01:12.899 - Event successfully produced
+(msvc_top) INFO 21:00:18.516 - Subscribed to topic(s): bubble tea-ordered, bubble tea-mixed
+(msvc_top) INFO 21:01:01.662 - Deliverying order 'b32ad' for customer_id 'd94a6c43d9f487c1bef659f05c002213', topping time is 10 second(s)
+(msvc_top) INFO 21:01:11.665 - Order 'b32ad' topped for customer_id 'd94a6c43d9f487c1bef659f05c002213'
+(msvc_top) INFO 21:01:12.899 - Event successfully produced
  - Topic 'bubble tea-status', Partition #5, Offset #47
  - Key: b32ad
  - Value: {"status": 400}
@@ -285,14 +285,14 @@ Should you want to try it out on your own and run it all locally, you will need 
 ![image](static/images/docs/webapp_order_topped.png)
 
 #### **IMPORTANT 1**
-Have you noticed the microservice **Top Pizza** is stateful as it has two steps?
+Have you noticed the microservice **Top Tea** is stateful as it has two steps?
 - Step 1/2: Receive early warning that an order was placed (topic ```bubble tea-ordered```)
-- Step 2/2: Receive notification the bubble tea is mixd (topic ```bubble tea-mixd```)
+- Step 2/2: Receive notification the bubble tea is mixed (topic ```bubble tea-mixed```)
 
-As that microservice is subscribed to two different topics, Apache Kafka cannot guarantee the order of events for the same event key. Hang on, but won't the early notification always arrive before the notification the bubble tea is mixd (see the architecture diagram above)? The answer to that is: usually yes, as the first step happens before the second one, however what if for some reason the microservice **Top Pizza** is down and a bunch of events get pushed through the topics? When the microservice is brought up it will consume the events from the two topics and not necessarily in the same chronological order (for the same event key). For that reason microservice like that needs to take into account this kind of situations. On this project, if that happens the customer would first get the status "Bear with us we are checking your order, it won’t take long" (once the bubble tea is mixd notification is processed), then would get the status "Your bubble tea was topped" (once the early warning notification is processed).
+As that microservice is subscribed to two different topics, Apache Kafka cannot guarantee the order of events for the same event key. Hang on, but won't the early notification always arrive before the notification the bubble tea is mixed (see the architecture diagram above)? The answer to that is: usually yes, as the first step happens before the second one, however what if for some reason the microservice **Top Pizza** is down and a bunch of events get pushed through the topics? When the microservice is brought up it will consume the events from the two topics and not necessarily in the same chronological order (for the same event key). For that reason microservice like that needs to take into account this kind of situations. On this project, if that happens the customer would first get the status "Bear with us we are checking your order, it won’t take long" (once the bubble tea is mixed notification is processed), then would get the status "Your bubble tea was topped" (once the early warning notification is processed).
 
 #### **IMPORTANT 2**
-The microservice **Process Status** is also stateful as it receives several notifications for the same event key. If that service was to be handled as stateless it would be a problem if a given order is not fully processed, for example, what if the mixer decided to call it a day? The status of the order would get stuck forever as "Your bubble tea is in the oven". For example, it could be estimated the orders shouldn't take more than 'X minutes' between being ordered and mixd and 'Y minutes' between being mixd and not completed yet, creating then a SLA in between microservices, if that gets violated it could trigger a notification to state something got stuck (at least the bubble tea shop manager would get notified before the customer complains about the delay).<br><br>
+The microservice **Process Status** is also stateful as it receives several notifications for the same event key. If that service was to be handled as stateless it would be a problem if a given order is not fully processed, for example, what if the mixer decided to call it a day? The status of the order would get stuck forever as "Your bubble tea is in the oven". For example, it could be estimated the orders shouldn't take more than 'X minutes' between being ordered and mixed and 'Y minutes' between being mixed and not completed yet, creating then a SLA in between microservices, if that gets violated it could trigger a notification to state something got stuck (at least the bubble tea shop manager would get notified before the customer complains about the delay).<br><br>
 What that microservice does is to spaw a new thread with an infinite loop to check the status of all orders in progress for every few seconds, like a watchdog.
 
 ### Graceful shutdown
@@ -304,20 +304,20 @@ One very important element of any Kafka consumer is by handling OS signals to be
 (msvc_status) INFO 21:46:53.372 - Consumer in consumer group successfully closed
 (msvc_status) INFO 21:46:53.372 - Graceful shutdown completed
 
-(msvc_assemble) INFO 21:46:54.541 - Starting graceful shutdown...
-(msvc_assemble) INFO 21:46:54.541 - Closing consumer in consumer group...
-(msvc_assemble) INFO 21:46:54.577 - Consumer in consumer group successfully closed
-(msvc_assemble) INFO 21:46:54.577 - Graceful shutdown completed
+(msvc_label) INFO 21:46:54.541 - Starting graceful shutdown...
+(msvc_label) INFO 21:46:54.541 - Closing consumer in consumer group...
+(msvc_label) INFO 21:46:54.577 - Consumer in consumer group successfully closed
+(msvc_label) INFO 21:46:54.577 - Graceful shutdown completed
 
 (msvc_mix) INFO 21:46:55.968 - Starting graceful shutdown...
 (msvc_mix) INFO 21:46:55.968 - Closing consumer in consumer group...
 (msvc_mix) INFO 21:46:55.995 - Consumer in consumer group successfully closed
 (msvc_mix) INFO 21:46:55.996 - Graceful shutdown completed
 
-(msvc_delivery) INFO 21:46:57.311 - Starting graceful shutdown...
-(msvc_delivery) INFO 21:46:57.311 - Closing consumer in consumer group...
-(msvc_delivery) INFO 21:46:57.341 - Consumer in consumer group successfully closed
-(msvc_delivery) INFO 21:46:57.341 - Graceful shutdown completed
+(msvc_top) INFO 21:46:57.311 - Starting graceful shutdown...
+(msvc_top) INFO 21:46:57.311 - Closing consumer in consumer group...
+(msvc_top) INFO 21:46:57.341 - Consumer in consumer group successfully closed
+(msvc_top) INFO 21:46:57.341 - Graceful shutdown completed
 ```
 
 ### Demo (happy path)
