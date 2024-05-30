@@ -1,7 +1,7 @@
 var log_data;
 var log_data_autoscroll;
 var order_id;
-var status_delivered;
+var status_topped;
 var last_result = -1;
 var one_last_call = 0;
 
@@ -9,7 +9,7 @@ $(document).ready(function () {
     log_data = $("#log_data");
     log_data_autoscroll = $("#log_data_autoscroll");
     order_id = $("#order_id").val();
-    status_delivered = $("#status_delivered").val();
+    status_topped = $("#status_topped").val();
     get_logs();
     setTimeout(function () {
         update_order_status();
@@ -31,13 +31,13 @@ function update_order_status() {
             dataType: "json",
             success: function (data) {
                 if (data) {
-                    if (last_result != status_delivered) {
+                    if (last_result != status_topped) {
                         $("#order_status").text(data.str);
                         setTimeout(function () {
                             update_order_status();
                         }, 2000);
                     }
-                    if (data.status == status_delivered) {
+                    if (data.status == status_topped) {
                         toggle_status("badge-info", "badge-success");
                     }
                     else if (last_result != data.status && last_result != -1) {

@@ -167,7 +167,7 @@ def get_tea_status():
                                     if int(tea_status) in (
                                         SYS_CONFIG["status-id"]["stuck"],
                                         SYS_CONFIG["status-id"]["cancelled"],
-                                        SYS_CONFIG["status-id"]["delivered"],
+                                        SYS_CONFIG["status-id"]["topped"],
                                         SYS_CONFIG["status-id"]["something_wrong"],
                                         SYS_CONFIG["status-id"]["unknown"],
                                     ):

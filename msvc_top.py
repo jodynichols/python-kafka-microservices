@@ -53,7 +53,7 @@ SYS_CONFIG = get_system_config(sys_config_file)
 
 # Set producer/consumer objects
 PENDING_ORDER = "PENDING"
-PRODUCE_TOPIC_TOPPED = SYS_CONFIG["kafka-topics"]["tea_delivered"]
+PRODUCE_TOPIC_TOPPED = SYS_CONFIG["kafka-topics"]["tea_topped"]
 PRODUCE_TOPIC_PENDING = SYS_CONFIG["kafka-topics"]["tea_pending"]
 PRODUCE_TOPIC_STATUS = SYS_CONFIG["kafka-topics"]["tea_status"]
 TOPIC_TEA_ORDERED = SYS_CONFIG["kafka-topics"]["tea_ordered"]
@@ -63,11 +63,11 @@ _, PRODUCER, CONSUMER, _ = set_producer_consumer(
     kafka_config_file,
     producer_extra_config={
         "on_delivery": delivery_report,
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_delivery"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_top"]}_{HOSTNAME}""",
     },
     consumer_extra_config={
-        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_delivery"]}_{HOSTNAME}""",
-        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_delivery"]}_{HOSTNAME}""",
+        "group.id": f"""{SYS_CONFIG["kafka-consumer-group-id"]["microservice_top"]}_{HOSTNAME}""",
+        "client.id": f"""{SYS_CONFIG["kafka-client-id"]["microservice_top"]}_{HOSTNAME}""",
     },
 )
 
@@ -76,7 +76,7 @@ GRACEFUL_SHUTDOWN = GracefulShutdown(consumer=CONSUMER)
 
 # State Store (Get DB class dynamically)
 DB = import_state_store_class(SYS_CONFIG["state-store-orders"]["db_module_class"])
-CUSTOMER_DB = SYS_CONFIG["state-store-delivery"]["name"]
+CUSTOMER_DB = SYS_CONFIG["state-store-topped"]["name"]
 with GRACEFUL_SHUTDOWN as _:
     with DB(
         CUSTOMER_DB,
@@ -84,9 +84,9 @@ with GRACEFUL_SHUTDOWN as _:
     ) as db:
         db.create_customer_table()
         db.delete_past_timestamp(
-            SYS_CONFIG["state-store-delivery"]["table_customers"],
+            SYS_CONFIG["state-store-topped"]["table_customers"],
             hours=int(
-                SYS_CONFIG["state-store-delivery"]["table_customers_retention_hours"]
+                SYS_CONFIG["state-store-topped"]["table_customers_retention_hours"]
             ),
         )
 
@@ -94,13 +94,13 @@ with GRACEFUL_SHUTDOWN as _:
 #####################
 # General functions #
 #####################
-def tea_delivered(order_id: str):
+def tea_topped(order_id: str):
     PRODUCER.produce(
         PRODUCE_TOPIC_TOPPED,
         key=order_id,
         value=json.dumps(
             {
-                "status": SYS_CONFIG["status-id"]["delivered"],
+                "status": SYS_CONFIG["status-id"]["topped"],
                 "timestamp": timestamp_now(),
             }
         ).encode(),
@@ -123,20 +123,20 @@ def tea_pending(order_id: str):
 
 
 def receive_tea_mixed():
-    def deliver_tea(
+    def top_tea(
         order_id: str,
         customer_id: str,
         factor: int = 1,
     ):
         # Delivery tea (blocking point as it is not using asyncio, but that is for demo purposes)
-        delivery_time = factor * (int(customer_id, 16) % 10 + 5)
+        topping_time = factor * (int(customer_id, 16) % 10 + 5)
         logging.info(
-            f"Deliverying order '{order_id}' for customer_id '{customer_id}', delivery time is {delivery_time} second(s)"
+            f"Deliverying order '{order_id}' for customer_id '{customer_id}', topping time is {topping_time} second(s)"
         )
-        time.sleep(delivery_time)
-        logging.info(f"Order '{order_id}' delivered to customer_id '{customer_id}'")
-        # Update kafka topics (tea delivered)
-        tea_delivered(order_id)
+        time.sleep(topping_time)
+        logging.info(f"Order '{order_id}' topped for customer_id '{customer_id}'")
+        # Update kafka topics (tea topped)
+        tea_topped(order_id)
 
     CONSUMER.subscribe(CONSUME_TOPICS)
     logging.info(f"Subscribed to topic(s): {', '.join(CONSUME_TOPICS)}")
@@ -157,13 +157,13 @@ def receive_tea_mixed():
                         topic = event.topic()
 
                         if topic == TOPIC_TEA_ORDERED:
-                            # Early warning that a tea must be delivered once ready (usually it should arrive before the tea is baked)
+                            # Early warning that a tea must be topped once ready (usually it should arrive before the tea is mixd)
                             try:
                                 order_details = json.loads(event.value().decode())
                                 order = order_details.get("order", dict())
                                 customer_id = order.get("customer_id", "0000")
 
-                                # Check if it is a pending order, that happens when the early notification (for some reason) arrives after the notification the tea is baked
+                                # Check if it is a pending order, that happens when the early notification (for some reason) arrives after the notification the tea is mixd
                                 is_pending = False
                                 with DB(
                                     CUSTOMER_DB,
@@ -181,14 +181,14 @@ def receive_tea_mixed():
                                         sys_config=SYS_CONFIG,
                                     ) as db:
                                         db.update_customer(order_id, customer_id)
-                                        deliver_tea(
+                                        top_tea(
                                             order_id,
                                             customer_id,
-                                            factor=2,  # penalised for not receiving the early warning before the notification the tea is baked
+                                            factor=2,  # penalised for not receiving the early warning before the notification the tea is mixd
                                         )
 
                                 else:
-                                    # In a real life scenario this microservices would have the delivery address of the customer_id
+                                    # In a real life scenario this microservices would have the topping address of the customer_id
                                     with DB(
                                         CUSTOMER_DB,
                                         sys_config=SYS_CONFIG,
@@ -196,7 +196,7 @@ def receive_tea_mixed():
                                         db.add_customer(order_id, customer_id)
 
                                     logging.info(
-                                        f"Early warning to deliver order '{order_id}' to customer_id '{customer_id}'"
+                                        f"Early warning to top order '{order_id}' to customer_id '{customer_id}'"
                                     )
 
                             except Exception:
@@ -206,7 +206,7 @@ def receive_tea_mixed():
                                 )
 
                         elif topic == TOPIC_TEA_MIXED:
-                            # tea ready to be delivered
+                            # tea ready to be topped
                             # Get customer_id (and address in a real life scenario) based on the order_id
                             with DB(
                                 CUSTOMER_DB,
@@ -215,7 +215,7 @@ def receive_tea_mixed():
                                 customer_id = db.get_order_id_customer(order_id)
 
                             if customer_id is not None:
-                                deliver_tea(
+                                top_tea(
                                     order_id,
                                     customer_id["customer_id"],
                                     factor=1,
@@ -229,7 +229,7 @@ def receive_tea_mixed():
                                 # Update kafka topics (error with order)
                                 tea_pending(order_id)
 
-                                # Add order_id to the DB as "pending", that happens when the early notification (for some reason) arrives after the notification the tea is baked
+                                # Add order_id to the DB as "pending", that happens when the early notification (for some reason) arrives after the notification the tea is mixd
                                 with DB(
                                     CUSTOMER_DB,
                                     sys_config=SYS_CONFIG,

@@ -311,7 +311,7 @@ def get_order(order_id: str):
                     ).strftime("%Y-%b-%d %H:%M:%S"),
                     status=order_details["status"],
                     status_str=order_details["status_str"],
-                    status_delivered=SYS_CONFIG["status-id"]["delivered"],
+                    status_topped=SYS_CONFIG["status-id"]["topped"],
                     username=order_details["username"],
                     order=f"""Tea: {order_details["tea"]}<br>
                             Sugar: {order_details["sugar"]}<br>

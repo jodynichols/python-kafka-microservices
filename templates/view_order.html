@@ -3,7 +3,7 @@
 {% block content %}
 {% include 'navbar.html' %}
 <input type="hidden" id="order_id" value={% if error %}""{% else %}"{{order_id}}"{% endif %} />
-<input type="hidden" id="status_delivered" value={{status_delivered}} />
+<input type="hidden" id="status_topped" value={{status_topped}} />
 <h4><span class="badge badge-dark w-100">Order status</span></h4>
 {% if error %}
 <p class="font-weight-bold text-danger">{{error}}</p>
@@ -24,7 +24,7 @@
         <tr>
             <td><a href="/orders/{{order_id}}">{{order_id}}</a></td>
             <td>{{timestamp}}</td>
-            <td><span class="badge {% if status == status_delivered %}badge-success{% else %}badge-info{% endif %}"
+            <td><span class="badge {% if status == status_topped %}badge-success{% else %}badge-info{% endif %}"
                     id="order_status">{{status_str}}</span></td>
             {% autoescape false %}
             <td>{{order}}</td>

@@ -67,7 +67,7 @@ class DB(BaseStateStore):
 
     def create_customer_table(self):
         self.execute(
-            f"""CREATE TABLE IF NOT EXISTS {self.sys_config["state-store-delivery"]["table_customers"]} (
+            f"""CREATE TABLE IF NOT EXISTS {self.sys_config["state-store-topped"]["table_customers"]} (
                 order_id TEXT PRIMARY KEY,
                 timestamp INTEGER,
                 customer_id TEXT
@@ -83,10 +83,10 @@ class DB(BaseStateStore):
                 username TEXT,
                 customer_id TEXT,
                 status INTEGER,
-                sauce TEXT,
-                cheese TEXT,
-                topping TEXT,
-                extras TEXT
+                tea TEXT,
+                sugar TEXT,
+                pearl TEXT,
+                topping TEXT
             )""",
             commit=True,
         )
@@ -156,7 +156,7 @@ class DB(BaseStateStore):
         order_id: str,
     ) -> dict:
         self.execute(
-            f"""SELECT * FROM {self.sys_config["state-store-delivery"]["table_customers"]}
+            f"""SELECT * FROM {self.sys_config["state-store-topped"]["table_customers"]}
                 WHERE
                     order_id=?
             """,
@@ -193,7 +193,6 @@ class DB(BaseStateStore):
         if data is not None:
             cols = list(map(lambda x: x[0], self.cur.description))
             data = dict(zip(cols, data))
-            data["extras"] = ", ".join(data["extras"].split(","))
             data["status_str"] = get_string_status(
                 self.sys_config["status"], data["status"]
             )
@@ -222,9 +221,6 @@ class DB(BaseStateStore):
             for item in data:
                 item = dict(zip(cols, item))
                 data_all[item["order_id"]] = item
-                data_all[item["order_id"]]["extras"] = ", ".join(
-                    data_all[item["order_id"]]["extras"].split(",")
-                )
                 data_all[item["order_id"]]["status_str"] = get_string_status(
                     self.sys_config["status"],
                     data_all[item["order_id"]]["status"],
@@ -289,7 +285,7 @@ class DB(BaseStateStore):
         customer_id: dict,
     ):
         self.execute(
-            f"""UPDATE {self.sys_config["state-store-delivery"]["table_customers"]} SET
+            f"""UPDATE {self.sys_config["state-store-topped"]["table_customers"]} SET
                     timestamp={timestamp_now()},
                     customer_id=?
                 WHERE
@@ -308,7 +304,7 @@ class DB(BaseStateStore):
         customer_id: dict,
     ):
         self.execute(
-            f"""INSERT INTO {self.sys_config["state-store-delivery"]["table_customers"]} (
+            f"""INSERT INTO {self.sys_config["state-store-topped"]["table_customers"]} (
                 order_id,
                 timestamp,
                 customer_id
@@ -337,10 +333,10 @@ class DB(BaseStateStore):
                 username,
                 customer_id,
                 status,
-                sauce,
-                cheese,
-                topping,
-                extras
+                tea,
+                sugar,
+                pearl,
+                topping
             )
             VALUES (
                 ?,
@@ -357,10 +353,10 @@ class DB(BaseStateStore):
                 order_id,
                 order_details["order"]["username"],
                 order_details["order"]["customer_id"],
-                order_details["order"]["sauce"],
-                order_details["order"]["cheese"],
-                order_details["order"]["main_topping"],
-                ",".join(order_details["order"]["extra_toppings"]),
+                order_details["order"]["tea"],
+                order_details["order"]["sugar"],
+                order_details["order"]["pearl"],
+                order_details["order"]["topping"],
             ],
             commit=True,
         )

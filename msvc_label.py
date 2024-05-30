@@ -125,17 +125,17 @@ def receive_orders():
                         else:
                             seed = int(
                                 hashlib.md5(
-                                    f"""{order["sauce"]}@{order["cheese"]}@{",".join(order["extra_toppings"])}@{order["main_topping"]}""".encode()
+                                    f"""{order["tea"]}@{order["sugar"]}@{order["pearl"]}@{order["topping"]}""".encode()
                                 ).hexdigest()[-4:],
                                 16,
                             )
 
                             # Assemble tea
-                            assembling_time = seed % 8 + 4
+                            labeling_time = seed % 8 + 4
                             logging.info(
-                                f"Preparing order '{order_id}', assembling time is {assembling_time} second(s)"
+                                f"Preparing order '{order_id}', labeling time is {labeling_time} second(s)"
                             )
-                            time.sleep(assembling_time)
+                            time.sleep(labeling_time)
                             logging.info(f"Order '{order_id}' is labeled!")
 
                             # Update kafka topics

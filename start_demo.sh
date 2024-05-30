@@ -33,17 +33,17 @@ else
 
     ./stop_demo.sh
 
-    #python3 msvc_status.py $1 $2 &
-    #python3 msvc_label.py $1 $2 &
-    #python3 msvc_mix.py $1 $2 &
-    #python3 msvc_top.py $1 $2 &
+    python3 msvc_status.py $1 $2 &
+    python3 msvc_label.py $1 $2 &
+    python3 msvc_mix.py $1 $2 &
+    python3 msvc_top.py $1 $2 &
     gunicorn 'webapp:main("'$1'","'$2'")' -b "localhost:8000" -w 1 -p pid/webapp.pid  &
 
     sleep 3
 
     echo
     echo "#######################################################"
-    echo "Navigate to http://localhost:8000 to order your pizza"
+    echo "Navigate to http://localhost:8000 to order your bubble tea"
     echo "#######################################################"
     echo
 

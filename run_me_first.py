@@ -107,7 +107,7 @@ KSQL_STATEMENTS = {
     STREAM_LABELED: f"""CREATE STREAM IF NOT EXISTS {STREAM_LABELED} (
         order_id VARCHAR KEY,
         status INT,
-        baking_time INT,
+        mixing_time INT,
         timestamp BIGINT
     ) WITH (
         KAFKA_TOPIC = '{TOPIC_LABELED}',
