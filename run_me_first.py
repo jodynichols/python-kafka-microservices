@@ -128,7 +128,7 @@ KSQL_STATEMENTS = {
         status INT,
         timestamp BIGINT
     ) WITH (
-        KAFKA_TOPIC = '{TOPIC_LABELED}',
+        KAFKA_TOPIC = '{TOPIC_TOPPED}',
         VALUE_FORMAT = 'JSON',
         TIMESTAMP = 'timestamp'
     );""",

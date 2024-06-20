@@ -102,7 +102,7 @@ def receive_tea_labeled():
                 else:
                     try:
                         # Add a little delay just to allow the logs on the previous micro-service to be displayed first
-                        time.sleep(0.15)
+                        time.sleep(0.4)
 
                         log_event_received(event)
 
