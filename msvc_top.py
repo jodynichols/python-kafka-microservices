@@ -128,10 +128,10 @@ def receive_tea_mixed():
         customer_id: str,
         factor: int = 1,
     ):
-        # Delivery tea (blocking point as it is not using asyncio, but that is for demo purposes)
+        # Topping tea (blocking point as it is not using asyncio, but that is for demo purposes)
         topping_time = factor * (int(customer_id, 16) % 10 + 5)
         logging.info(
-            f"Deliverying order '{order_id}' for customer_id '{customer_id}', topping time is {topping_time} second(s)"
+            f"Topping order '{order_id}' for customer_id '{customer_id}', topping time is {topping_time} second(s)"
         )
         time.sleep(topping_time)
         logging.info(f"Order '{order_id}' topped for customer_id '{customer_id}'")

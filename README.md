@@ -267,7 +267,7 @@ Should you want to try it out on your own and run it all locally, you will need 
 9. The microservice **Top Pizza** (step 2/2), which is subscribed to the topic ```bubble tea-mixed```, receives the notification the bubble tea is mixed, then it delivers the bubble tea. It already had time to plan the topping as it got an early warning as soon as the order was placed. Once the bubble tea is topped, it will produce an event to the topic ```bubble tea-status```:
 ```
 (msvc_top) INFO 21:00:18.516 - Subscribed to topic(s): bubble tea-ordered, bubble tea-mixed
-(msvc_top) INFO 21:01:01.662 - Deliverying order 'b32ad' for customer_id 'd94a6c43d9f487c1bef659f05c002213', topping time is 10 second(s)
+(msvc_top) INFO 21:01:01.662 - Topping order 'b32ad' for customer_id 'd94a6c43d9f487c1bef659f05c002213', topping time is 10 second(s)
 (msvc_top) INFO 21:01:11.665 - Order 'b32ad' topped for customer_id 'd94a6c43d9f487c1bef659f05c002213'
 (msvc_top) INFO 21:01:12.899 - Event successfully produced
  - Topic 'bubble tea-status', Partition #5, Offset #47

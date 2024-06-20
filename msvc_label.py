@@ -79,7 +79,7 @@ GRACEFUL_SHUTDOWN = GracefulShutdown(consumer=CONSUMER)
 #####################
 def tea_labeled(
     order_id: str,
-    baking_time: int,
+    mixing_time: int,
 ):
     # Produce to kafka topic
     PRODUCER.produce(
@@ -88,7 +88,7 @@ def tea_labeled(
         value=json.dumps(
             {
                 "status": SYS_CONFIG["status-id"]["tea_labeled"],
-                "baking_time": baking_time,
+                "mixing_time": mixing_time,
                 "timestamp": timestamp_now(),
             }
         ).encode(),
@@ -139,10 +139,10 @@ def receive_orders():
                             logging.info(f"Order '{order_id}' is labeled!")
 
                             # Update kafka topics
-                            baking_time = seed % 8 + 8
+                            mixing_time = seed % 8 + 8
                             tea_labeled(
                                 order_id,
-                                baking_time,
+                                mixing_time,
                             )
 
                     except Exception:
